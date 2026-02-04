@@ -1,0 +1,69 @@
+<script type="text/javascript">
+    RED.nodes.registerType('omron-fins-config', {
+        category: 'config',
+        defaults: {
+            host: {value: "", required: true},
+            port: {value: 9600, required: true, validate: RED.validators.number()},
+            DA1: {value: 0, required: true, validate: RED.validators.number()},
+            DA2: {value: 0, required: true, validate: RED.validators.number()},
+            SA1: {value: 0, required: true, validate: RED.validators.number()},
+            SA2: {value: 0, required: true, validate: RED.validators.number()},
+            timeout: {value: 5000, required: true, validate: RED.validators.number()}
+        },
+        label: function() {
+            return this.host + ":" + this.port;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="omron-fins-config">
+    <div class="form-row">
+        <label for="node-config-input-host"><i class="fa fa-globe"></i> Host</label>
+        <input type="text" id="node-config-input-host" placeholder="192.168.1.1">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="fa fa-random"></i> Port</label>
+        <input type="text" id="node-config-input-port" placeholder="9600">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-DA1"><i class="fa fa-tag"></i> DA1</label>
+        <input type="text" id="node-config-input-DA1" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-DA2"><i class="fa fa-tag"></i> DA2</label>
+        <input type="text" id="node-config-input-DA2" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-SA1"><i class="fa fa-tag"></i> SA1</label>
+        <input type="text" id="node-config-input-SA1" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-SA2"><i class="fa fa-tag"></i> SA2</label>
+        <input type="text" id="node-config-input-SA2" placeholder="0">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-timeout"><i class="fa fa-clock-o"></i> Timeout (ms)</label>
+        <input type="text" id="node-config-input-timeout" placeholder="5000">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="omron-fins-config">
+    <p>Configuration for Omron FINS connection.</p>
+    <h3>Details</h3>
+    <dl class="message-properties">
+        <dt>Host <span class="property-type">string</span></dt>
+        <dd>The IP address or hostname of the Omron PLC</dd>
+        <dt>Port <span class="property-type">number</span></dt>
+        <dd>The FINS port number (default: 9600)</dd>
+        <dt>DA1 <span class="property-type">number</span></dt>
+        <dd>Destination network address</dd>
+        <dt>DA2 <span class="property-type">number</span></dt>
+        <dd>Destination node address</dd>
+        <dt>SA1 <span class="property-type">number</span></dt>
+        <dd>Source network address</dd>
+        <dt>SA2 <span class="property-type">number</span></dt>
+        <dd>Source node address</dd>
+        <dt>Timeout <span class="property-type">number</span></dt>
+        <dd>Connection timeout in milliseconds (default: 5000)</dd>
+    </dl>
+</script>
