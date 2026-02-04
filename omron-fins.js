@@ -38,6 +38,7 @@ module.exports = function (RED) {
         const node = this;
 
         this.config = RED.nodes.getNode(config.connection);
+        this.inputMode = config.inputMode || "node";
         this.operation = config.operation || "read";
         this.address = config.address || "";
         this.dataType = config.dataType || "DM";
@@ -52,10 +53,38 @@ module.exports = function (RED) {
         }
 
         node.on('input', function (msg) {
-            const operation = msg.operation || node.operation;
-            let address = msg.address || node.address;
-            const dataType = msg.dataType || node.dataType;
-            const mode = msg.mode || node.mode;
+            let operation, address, dataType, mode;
+
+            if (node.inputMode === "msg") {
+                // Use input message properties (required)
+                operation = msg.operation;
+                address = msg.address;
+                dataType = msg.dataType;
+                mode = msg.mode;
+
+                if (!operation) {
+                    node.error("Input Mode is 'Use Input Message' but msg.operation is missing", msg);
+                    return;
+                }
+                if (operation !== 'mode' && !address) {
+                    node.error("Input Mode is 'Use Input Message' but msg.address is missing", msg);
+                    return;
+                }
+                if (operation !== 'mode' && !dataType) {
+                    node.error("Input Mode is 'Use Input Message' but msg.dataType is missing", msg);
+                    return;
+                }
+                if (operation === 'mode' && !mode) {
+                    node.error("Input Mode is 'Use Input Message' but msg.mode is missing", msg);
+                    return;
+                }
+            } else {
+                // Use node configuration
+                operation = node.operation;
+                address = node.address;
+                dataType = node.dataType;
+                mode = node.mode;
+            }
 
             // Support for multiple addresses from UI or msg
             let isMultiRead = false;
@@ -63,8 +92,8 @@ module.exports = function (RED) {
                 if (Array.isArray(address)) {
                     // msg.address is array
                     isMultiRead = true;
-                } else if (node.addressMode === 'multiple' && node.addressList.length > 0) {
-                    // UI configured multi-address
+                } else if (node.inputMode === 'node' && node.addressMode === 'multiple' && node.addressList.length > 0) {
+                    // UI configured multi-address (only when using node settings)
                     isMultiRead = true;
                     address = node.addressList;
                 }
@@ -212,15 +241,11 @@ module.exports = function (RED) {
 
                         // Now send the mode command
                         const command = buildModeCommand(mode, node.config, assignedNodeAddress);
-                        node.warn("Sending mode command (" + mode + "), length: " + command.length + ", hex: " + command.toString('hex'));
                         client.write(command);
                         return;
                     }
 
                     // Handle FINS command response
-
-                    // Log raw response for debugging
-                    node.warn("Response buffer length: " + data.length + ", hex: " + data.toString('hex'));
 
                     const responseBuffer = parseFinsResponse(data);
 
@@ -253,10 +278,15 @@ module.exports = function (RED) {
                         const addr = typeof addrInfo === 'string' ? addrInfo : addrInfo.address;
                         const dt = typeof addrInfo === 'object' && addrInfo.dataType ? addrInfo.dataType : dataType;
 
-                        // Use per-address data format if available, otherwise use global format
-                        const addrDataFormat = (typeof addrInfo === 'object' && addrInfo.dataFormat)
-                            ? addrInfo.dataFormat
-                            : (msg.dataFormat || node.dataFormat);
+                        // Use per-address data format if available, otherwise use appropriate format based on inputMode
+                        let addrDataFormat;
+                        if (typeof addrInfo === 'object' && addrInfo.dataFormat) {
+                            addrDataFormat = addrInfo.dataFormat;
+                        } else if (node.inputMode === 'msg') {
+                            addrDataFormat = msg.dataFormat || 'array'; // Default to array if not specified in msg
+                        } else {
+                            addrDataFormat = node.dataFormat;
+                        }
 
                         // Format the data
                         const formattedValue = formatData(responseBuffer, addrDataFormat, currentAddressInfo, currentBitCount);
@@ -298,8 +328,13 @@ module.exports = function (RED) {
                         completed = true;
                         clearTimeout(timeout);
 
-                        // Format the data using global format
-                        const dataFormat = msg.dataFormat || node.dataFormat;
+                        // Format the data using appropriate format based on inputMode
+                        let dataFormat;
+                        if (node.inputMode === 'msg') {
+                            dataFormat = msg.dataFormat || 'array'; // Default to array if not specified in msg
+                        } else {
+                            dataFormat = node.dataFormat;
+                        }
                         const formattedValue = formatData(responseBuffer, dataFormat, currentAddressInfo, currentBitCount);
                         msg.payload = formattedValue;
                         node.send(msg);

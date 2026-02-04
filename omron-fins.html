@@ -5,6 +5,7 @@
         defaults: {
             name: {value: ""},
             connection: {value: "", type: "omron-fins-config", required: true},
+            inputMode: {value: "node"},
             operation: {value: "read"},
             address: {value: ""},
             dataType: {value: "DM"},
@@ -32,6 +33,24 @@
             var updateFields = function() {
                 var operation = $('#node-input-operation').val();
                 var addressMode = $('#node-input-addressMode').val();
+                var inputMode = $('#node-input-inputMode').val();
+                
+                // If input mode is 'msg', hide config fields
+                if (inputMode === 'msg') {
+                    $('.form-row-operation').hide();
+                    $('.form-row-datatype').hide();
+                    $('.form-row-address').hide();
+                    $('.form-row-addressMode').hide();
+                    $('.form-row-dataFormat').hide();
+                    $('.form-row-mode').hide();
+                    $('.form-row-addressList').hide();
+                    return;
+                }
+                
+                // Show all fields for 'node' mode
+                $('.form-row-operation').show();
+                $('.form-row-datatype').show();
+                $('.form-row-addressMode').show();
                 
                 if (operation === 'mode') {
                     $('.form-row-address').hide();
@@ -145,6 +164,7 @@
             
             $('#node-input-operation').on('change', updateFields);
             $('#node-input-addressMode').on('change', updateFields);
+            $('#node-input-inputMode').on('change', updateFields);
             updateFields();
         }
     });
@@ -160,6 +180,13 @@
         <input type="text" id="node-input-connection">
     </div>
     <div class="form-row">
+        <label for="node-input-inputMode"><i class="fa fa-cog"></i> Input Mode</label>
+        <select id="node-input-inputMode" style="width:70%">
+            <option value="node">Use Node Settings</option>
+            <option value="msg">Use Input Message</option>
+        </select>
+    </div>
+    <div class="form-row form-row-operation">
         <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
         <select id="node-input-operation">
             <option value="read">Read</option>
@@ -220,19 +247,26 @@
 <script type="text/html" data-help-name="omron-fins">
     <p>Communicate with Omron PLCs using the FINS protocol.</p>
     
+    <h3>Configuration</h3>
+    <p><b>Input Mode:</b> Controls whether the node uses its configured settings or reads parameters from the input message.</p>
+    <ul>
+        <li><b>Use Node Settings:</b> Uses the operation, data type, and address configured in this node. Input message properties are ignored.</li>
+        <li><b>Use Input Message:</b> Reads all parameters from the input message (<code>msg.operation</code>, <code>msg.dataType</code>, <code>msg.address</code>, etc.). Node configuration fields are disabled and ignored.</li>
+    </ul>
+    
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt class="optional">operation <span class="property-type">string</span></dt>
-        <dd>The operation to perform: "read", "write", or "mode". Overrides node configuration.</dd>
+        <dd>The operation to perform: "read", "write", or "mode". <b>Required when Input Mode is "Use Input Message".</b></dd>
         
         <dt class="optional">address <span class="property-type">string | array</span></dt>
-        <dd>Memory address to read/write. Overrides node configuration. Not required for mode operation.<br>
+        <dd>Memory address to read/write. Not required for mode operation.<br>
         <b>Format:</b> Word address (e.g., "100") or bit address (e.g., "100.05" for bit 5 of word 100).<br>
         <b>Bit Addressing:</b> Use format "word.bit" where bit is 0-15 (bit 0 is LSB, bit 15 is MSB).<br>
         For multi-address read, provide an array of addresses (strings) or objects with {address, count, dataType}.</dd>
         
         <dt class="optional">dataType <span class="property-type">string</span></dt>
-        <dd>Memory area type (CIO, WR, HR, AR, DM, EM). Overrides node configuration.</dd>
+        <dd>Memory area type (CIO, WR, HR, AR, DM, EM). <b>Required when Input Mode is "Use Input Message".</b></dd>
         
         <dt class="optional">mode <span class="property-type">string</span></dt>
         <dd>PLC operating mode: "RUN", "MONITOR", or "STOP". Required for mode operation.</dd>

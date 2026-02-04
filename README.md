@@ -26,19 +26,42 @@ A node for reading and writing data to/from Omron PLCs using the FINS protocol.
 #### Configuration
 
 - **Connection**: Reference to an omron-fins-config node
-- **Operation**: Read or Write operation
+- **Input Mode**: Controls parameter source
+  - **Use Node Settings** (default): Uses the configured operation, data type, and address from the node settings
+  - **Use Input Message**: Reads all parameters from the input message (msg.operation, msg.dataType, msg.address, etc.)
+- **Operation**: Read, Write, or Change Mode operation (only used when Input Mode is "Use Node Settings")
 - **Data Type**: Memory area type (CIO, WR, HR, AR, DM, EM)
-- **Address**: Memory address to access
+- **Address**: Memory address to access (supports bit notation like "100.05" for bit 5 of word 100)
 
 #### Input
 
-The node accepts messages with the following optional properties to override the configuration:
+**When Input Mode is "Use Node Settings":**
+- The node uses its configured settings
+- Input message properties are ignored
 
-- `msg.operation` (string): "read" or "write"
-- `msg.dataType` (string): Memory area type
-- `msg.address` (string): Memory address
-- `msg.count` (number): Number of words to read (read operation only, default: 1)
-- `msg.payload` (number|array): Data to write (write operation only)
+**When Input Mode is "Use Input Message":**
+- All parameters must be provided in the input message:
+  - `msg.operation` (string, required): "read", "write", or "mode"
+  - `msg.dataType` (string, required for read/write): Memory area type (CIO, WR, HR, AR, DM, EM)
+  - `msg.address` (string, required for read/write): Memory address (supports bit notation like "100.05")
+  - `msg.count` (number, optional): Number of words/bits to read (default: 1)
+  - `msg.dataFormat` (string, optional): Output format for read data (default: "array")
+  - `msg.payload` (number|array|boolean, required for write): Data to write
+  - `msg.mode` (string, required for mode operation): "RUN", "MONITOR", or "STOP"
+
+**Data Format Options:**
+
+| Format     | Description                                 | Output Type      |
+| ---------- | ------------------------------------------- | ---------------- |
+| `array`    | Signed 16-bit integers (default)            | Array of numbers |
+| `unsigned` | Unsigned 16-bit integers (0-65535)          | Array of numbers |
+| `int32`    | 32-bit signed integers (pairs of words)     | Array of numbers |
+| `float32`  | IEEE 754 32-bit floats (pairs of words)     | Array of numbers |
+| `binary`   | Binary string representation (16 bits each) | Array of strings |
+| `hex`      | Hexadecimal string representation           | Array of strings |
+| `ascii`    | ASCII text string                           | String           |
+| `buffer`   | Raw Node.js Buffer object                   | Buffer           |
+| `bits`     | Bit arrays (each word as 16 booleans)       | Array of arrays  |
 
 #### Output
 
@@ -53,7 +76,17 @@ msg.operation = "read";
 msg.dataType = "DM";
 msg.address = "100";
 msg.count = 10;
+msg.dataFormat = "unsigned"; // Optional: specify output format
 return msg;
+```
+
+**Read bit 5 from DM100:**
+```javascript
+msg.operation = "read";
+msg.dataType = "DM";
+msg.address = "100.05";
+msg.count = 1;
+return msg; // Returns single boolean value
 ```
 
 **Write values to DM200:**
