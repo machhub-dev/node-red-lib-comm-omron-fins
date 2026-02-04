@@ -3,9 +3,6 @@
     "version": "1.0.0",
     "description": "Node-RED nodes for Omron FINS protocol communication",
     "main": "omron-fins.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
     "keywords": [
         "node-red",
         "omron",
@@ -14,7 +11,7 @@
         "automation",
         "industrial"
     ],
-    "author": "",
+    "author": "Intellogic Technology Sdn Bhd",
     "license": "Apache-2.0",
     "node-red": {
         "nodes": {
@@ -28,7 +25,7 @@
     "devDependencies": {},
     "repository": {
         "type": "git",
-        "url": ""
+        "url": "https://github.com/machhub-dev/node-red-lib-comm-omron-fins.git"
     },
     "engines": {
         "node": ">=14.0.0"
