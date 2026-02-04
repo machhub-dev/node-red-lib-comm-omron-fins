@@ -19,6 +19,50 @@ The following Omron PLC series support the FINS protocol. Testing status:
 
 If you successfully test this library with other PLC models, please report your findings so we can update this table.
 
+## Implemented FINS Commands
+
+This library currently implements a subset of the FINS protocol commands:
+
+| Command                         | Code      | Description                                                    | Status                   |
+| ------------------------------- | --------- | -------------------------------------------------------------- | ------------------------ |
+| **Memory Area Read**            | 0x01 0x01 | Read word/bit data from memory areas (CIO, WR, HR, AR, DM, EM) | ✅ Implemented            |
+| **Memory Area Write**           | 0x01 0x02 | Write word/bit data to memory areas                            | ✅ Implemented            |
+| **RUN**                         | 0x04 0x01 | Change PLC mode to RUN or MONITOR                              | ✅ Implemented (TCP only) |
+| **STOP**                        | 0x04 0x02 | Change PLC to STOP mode                                        | ✅ Implemented (TCP only) |
+| **Access Right Forced Acquire** | 0x0C 0x01 | Acquire exclusive access rights for mode changes               | ✅ Implemented (TCP only) |
+
+**Note:** RUN and MONITOR modes both use command 0x04 0x01, differentiated by the mode parameter (0x04 for RUN, 0x02 for MONITOR).
+
+### Not Yet Implemented
+
+The following FINS commands are **not yet implemented** but may be added in future versions:
+
+| Command                       | Code           | Description                               | Status            |
+| ----------------------------- | -------------- | ----------------------------------------- | ----------------- |
+| **Multiple Memory Area Read** | 0x01 0x04      | Read multiple memory areas in one command | ⏳ Not implemented |
+| **Memory Area Fill**          | 0x01 0x03      | Fill memory area with same data           | ⏳ Not implemented |
+| **Memory Area Transfer**      | 0x01 0x05      | Transfer data between memory areas        | ⏳ Not implemented |
+| **Parameter Area Read**       | 0x02 0x01      | Read PLC parameters                       | ⏳ Not implemented |
+| **Parameter Area Write**      | 0x02 0x02      | Write PLC parameters                      | ⏳ Not implemented |
+| **Parameter Area Clear**      | 0x02 0x03      | Clear parameter area                      | ⏳ Not implemented |
+| **Program Area Read**         | 0x03 0x06      | Read program data                         | ⏳ Not implemented |
+| **Program Area Write**        | 0x03 0x07      | Write program data                        | ⏳ Not implemented |
+| **Program Area Clear**        | 0x03 0x08      | Clear program area                        | ⏳ Not implemented |
+| **Status Read**               | 0x06 0x01      | Read CPU Unit status                      | ⏳ Not implemented |
+| **Clock Read**                | 0x07 0x01      | Read PLC clock                            | ⏳ Not implemented |
+| **Clock Write**               | 0x07 0x02      | Write PLC clock                           | ⏳ Not implemented |
+| **Error Log Read**            | 0x21 0x01      | Read error log                            | ⏳ Not implemented |
+| **Error Log Clear**           | 0x21 0x02      | Clear error log                           | ⏳ Not implemented |
+| **Forced Set/Reset**          | 0x23 0x01/0x02 | Force set/reset I/O bits                  | ⏳ Not implemented |
+| **File Memory Operations**    | Various        | File read/write/format operations         | ⏳ Not implemented |
+
+### Special Features Implemented
+
+- **Bit-level addressing** - Read/write individual bits using "word.bit" notation (e.g., "100.05")
+- **Multi-address read** - Read multiple addresses in a single operation
+- **Multiple data formats** - Support for signed/unsigned, int32, float32, binary, hex, ASCII, buffer, and bit arrays
+- **Read-modify-write for bits** - Preserve other bits when writing to specific bits
+
 ## Installation
 
 ### Using npm (when published)
