@@ -70,7 +70,8 @@ module.exports = function (RED) {
                     node.error("Input Mode is 'Use Input Message' but msg.address is missing", msg);
                     return;
                 }
-                if (operation !== 'mode' && !dataType) {
+                // dataType can be optional if address is array with per-object dataType
+                if (operation !== 'mode' && !dataType && !Array.isArray(address)) {
                     node.error("Input Mode is 'Use Input Message' but msg.dataType is missing", msg);
                     return;
                 }
@@ -455,7 +456,8 @@ module.exports = function (RED) {
 
     function buildReadCommand(dataType, address, count, config, clientNode, addressInfo) {
         // FINS command structure for memory area read
-        const finsFrame = Buffer.alloc(16); // FINS command frame
+        // 10 bytes header + 2 bytes command + 1 byte area + 2 bytes addr + 1 byte bit + 2 bytes count = 18 bytes
+        const finsFrame = Buffer.alloc(18);
 
         // FINS Command frame
         finsFrame.writeUInt8(0x80, 0);   // ICF
@@ -494,25 +496,24 @@ module.exports = function (RED) {
             wordCount = endWord - startWord + 1;
         }
 
-        const countBytes = Buffer.alloc(2);
-        countBytes.writeUInt16BE(wordCount, 0);
+        finsFrame.writeUInt16BE(wordCount, 16);
 
         // Build FINS/TCP header
         const header = Buffer.alloc(16);
         header.write('FINS', 0, 4, 'ascii');
-        header.writeUInt32BE(8 + finsFrame.length + countBytes.length, 4);  // Length
+        header.writeUInt32BE(8 + finsFrame.length, 4);  // Length
         header.writeUInt32BE(0x02, 8);   // Command 2: Send Frame
         header.writeUInt32BE(0x00, 12);  // Error code
 
-        return Buffer.concat([header, finsFrame, countBytes]);
+        return Buffer.concat([header, finsFrame]);
     }
 
     function buildWriteCommand(dataType, address, data, config, clientNode, addressInfo) {
         // FINS command structure for memory area write
         const values = Array.isArray(data) ? data : [data];
 
-        // FINS frame: 10 bytes header + 6 bytes command + data
-        const finsFrame = Buffer.alloc(16 + values.length * 2);
+        // FINS frame: 10 bytes header + 8 bytes command + data
+        const finsFrame = Buffer.alloc(18 + values.length * 2);
 
         // FINS Command frame header
         finsFrame.writeUInt8(0x80, 0);   // ICF
@@ -937,5 +938,5 @@ module.exports = function (RED) {
         return errors[errorCode] || "Unknown error";
     }
 
-    RED.nodes.registerType("omron-fins", OmronFinsNode);
+    RED.nodes.registerType("omron-fins-tcp", OmronFinsNode);
 };

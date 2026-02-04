@@ -18,8 +18,10 @@
     "license": "Apache-2.0",
     "node-red": {
         "nodes": {
-            "omron-fins": "omron-fins.js",
-            "omron-fins-config": "omron-fins-config.js"
+            "omron-fins-tcp": "omron-fins.js",
+            "omron-fins-config": "omron-fins-config.js",
+            "omron-fins-udp": "omron-fins-udp.js",
+            "omron-fins-udp-config": "omron-fins-udp-config.js"
         }
     },
     "dependencies": {},

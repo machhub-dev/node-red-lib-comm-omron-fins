@@ -1,18 +1,20 @@
 <script type="text/javascript">
-    RED.nodes.registerType('omron-fins-config', {
+    RED.nodes.registerType('omron-fins-udp-config', {
         category: 'config',
         defaults: {
             name: {value: ""},
             host: {value: "", required: true},
             port: {value: 9600, required: true, validate: RED.validators.number()},
+            localPort: {value: 0, validate: RED.validators.number()},
             DA1: {value: 0, required: true, validate: RED.validators.number()},
             DA2: {value: 0, required: true, validate: RED.validators.number()},
             SA1: {value: 0, required: true, validate: RED.validators.number()},
             SA2: {value: 0, required: true, validate: RED.validators.number()},
-            timeout: {value: 5000, required: true, validate: RED.validators.number()}
+            timeout: {value: 1000, required: true, validate: RED.validators.number()},
+            retries: {value: 3, required: true, validate: RED.validators.number()}
         },
         label: function() {
-            return this.name || (this.host + ":" + this.port);
+            return this.name || (this.host + ":" + this.port + " (UDP)");
         },
         oneditprepare: function() {
             $('#node-config-input-showAdvanced').on('change', function() {
@@ -28,7 +30,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="omron-fins-config">
+<script type="text/html" data-template-name="omron-fins-udp-config">
     <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-config-input-name" placeholder="Optional connection name">
@@ -42,6 +44,10 @@
         <input type="text" id="node-config-input-port" placeholder="9600">
     </div>
     <div class="form-row">
+        <label for="node-config-input-localPort"><i class="fa fa-random"></i> Local Port</label>
+        <input type="text" id="node-config-input-localPort" placeholder="0 (auto)">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-DA2"><i class="fa fa-microchip"></i> PLC Node</label>
         <input type="number" id="node-config-input-DA2" placeholder="0" min="0" max="254" style="width:100px">
         <span style="margin-left:10px; color:#666;">PLC node number (0-254, usually 0)</span>
@@ -49,7 +55,7 @@
     <div class="form-row">
         <label for="node-config-input-SA2"><i class="fa fa-laptop"></i> PC Node</label>
         <input type="number" id="node-config-input-SA2" placeholder="0" min="0" max="254" style="width:100px">
-        <span style="margin-left:10px; color:#666;">PC node number (0-254, use 0 for auto)</span>
+        <span style="margin-left:10px; color:#666;">PC node number (0-254, usually 0)</span>
     </div>
     <div class="form-row">
         <label style="width:auto; margin-right:10px;">
@@ -69,19 +75,29 @@
     </div>
     <div class="form-row">
         <label for="node-config-input-timeout"><i class="fa fa-clock-o"></i> Timeout (ms)</label>
-        <input type="text" id="node-config-input-timeout" placeholder="5000">
+        <input type="text" id="node-config-input-timeout" placeholder="1000">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-retries"><i class="fa fa-repeat"></i> Retries</label>
+        <input type="text" id="node-config-input-retries" placeholder="3">
     </div>
 </script>
 
-<script type="text/html" data-help-name="omron-fins-config">
-    <p>Configuration for Omron FINS TCP connection.</p>
+<script type="text/html" data-help-name="omron-fins-udp-config">
+    <p>Configuration for Omron FINS UDP connection.</p>
+    
+    <h3>When to Use UDP</h3>
+    <p>UDP is connectionless and faster but does not guarantee delivery. Use UDP when speed is more important than reliability.</p>
     
     <h3>Basic Settings</h3>
     <ul>
         <li><b>Host:</b> IP address of the Omron PLC</li>
-        <li><b>Port:</b> FINS TCP port (default: 9600)</li>
+        <li><b>Port:</b> FINS UDP port (default: 9600)</li>
         <li><b>PLC Node:</b> The PLC's node number (usually 0, check your PLC settings)</li>
-        <li><b>PC Node:</b> Your PC's node number (use 0 for automatic assignment)</li>
+        <li><b>PC Node:</b> Your PC's node number (usually 0)</li>
+        <li><b>Local Port:</b> UDP source port (0 = automatic)</li>
+        <li><b>Timeout:</b> Response timeout in milliseconds (default: 1000ms)</li>
+        <li><b>Retries:</b> Number of retry attempts on timeout (default: 3)</li>
     </ul>
     
     <h3>Advanced Network Settings</h3>

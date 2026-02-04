@@ -1,15 +1,14 @@
 <script type="text/javascript">
-    RED.nodes.registerType('omron-fins-tcp', {
+    RED.nodes.registerType('omron-fins-udp', {
         category: 'MACHHUB Comms',
         color: '#3FADB5',
         defaults: {
             name: {value: ""},
-            connection: {value: "", type: "omron-fins-config", required: true},
+            connection: {value: "", type: "omron-fins-udp-config", required: true},
             inputMode: {value: "node"},
             operation: {value: "read"},
             address: {value: ""},
             dataType: {value: "DM"},
-            mode: {value: "RUN"},
             addressMode: {value: "single"},
             addressList: {value: []},
             dataFormat: {value: "array"}
@@ -20,9 +19,9 @@
         label: function() {
             if (this.name) return this.name;
             if (this.addressMode === 'multiple' && this.addressList && this.addressList.length > 0) {
-                return "omron-fins-tcp (" + this.addressList.length + " addresses)";
+                return "omron-fins-udp (" + this.addressList.length + " addresses)";
             }
-            return "omron-fins-tcp";
+            return "omron-fins-udp";
         },
         labelStyle: function() {
             return this.name ? "node_label_italic" : "";
@@ -42,7 +41,6 @@
                     $('.form-row-address').hide();
                     $('.form-row-addressMode').hide();
                     $('.form-row-dataFormat').hide();
-                    $('.form-row-mode').hide();
                     $('.form-row-addressList').hide();
                     return;
                 }
@@ -52,27 +50,18 @@
                 $('.form-row-datatype').show();
                 $('.form-row-addressMode').show();
                 
-                if (operation === 'mode') {
-                    $('.form-row-address').hide();
-                    $('.form-row-addressMode').hide();
-                    $('.form-row-addressList').hide();
-                    $('.form-row-datatype').hide();
+                if (operation === 'write') {
                     $('.form-row-dataFormat').hide();
-                    $('.form-row-mode').show();
                 } else {
-                    $('.form-row-mode').hide();
-                    $('.form-row-datatype').show();
-                    $('.form-row-addressMode').show();
-                    
-                    if (addressMode === 'single') {
-                        $('.form-row-address').show();
-                        $('.form-row-addressList').hide();
-                        $('.form-row-dataFormat').show();
-                    } else {
-                        $('.form-row-address').hide();
-                        $('.form-row-addressList').show();
-                        $('.form-row-dataFormat').hide();
-                    }
+                    $('.form-row-dataFormat').show();
+                }
+                
+                if (addressMode === 'single') {
+                    $('.form-row-address').show();
+                    $('.form-row-addressList').hide();
+                } else {
+                    $('.form-row-address').hide();
+                    $('.form-row-addressList').show();
                 }
             };
             
@@ -119,8 +108,8 @@
                         })
                         .appendTo(row);
                     
-                    $('<select/>').css({width: '100px', marginRight: '5px'})
-                        .append($('<option/>',{value:'array',text:'Number'}))
+                    $('<select/>').css({width: '90px', marginRight: '5px'})
+                        .append($('<option/>',{value:'array',text:'Array'}))
                         .append($('<option/>',{value:'unsigned',text:'Unsigned'}))
                         .append($('<option/>',{value:'int32',text:'Int32'}))
                         .append($('<option/>',{value:'float32',text:'Float32'}))
@@ -156,7 +145,6 @@
                 container.append(addBtn);
             };
             
-            // Initialize address list
             if (!node.addressList || node.addressList.length === 0) {
                 node.addressList = [];
             }
@@ -170,7 +158,7 @@
     });
 </script>
 
-<script type="text/html" data-template-name="omron-fins-tcp">
+<script type="text/html" data-template-name="omron-fins-udp">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -191,7 +179,6 @@
         <select id="node-input-operation">
             <option value="read">Read</option>
             <option value="write">Write</option>
-            <option value="mode">Change Mode</option>
         </select>
     </div>
     <div class="form-row form-row-datatype">
@@ -234,18 +221,18 @@
         <label><i class="fa fa-list"></i> Addresses</label>
         <div id="node-input-addressList-container" style="min-height: 100px;"></div>
     </div>
-    <div class="form-row form-row-mode" style="display: none;">
-        <label for="node-input-mode"><i class="fa fa-play-circle"></i> Mode</label>
-        <select id="node-input-mode">
-            <option value="RUN">RUN</option>
-            <option value="MONITOR">MONITOR</option>
-            <option value="STOP">STOP</option>
-        </select>
-    </div>
 </script>
 
-<script type="text/html" data-help-name="omron-fins-tcp">
-    <p>Communicate with Omron PLCs using the FINS protocol.</p>
+<script type="text/html" data-help-name="omron-fins-udp">
+    <p>Communicate with Omron PLCs using the FINS protocol over UDP.</p>
+    
+    <h3>UDP vs TCP</h3>
+    <p><b>UDP</b> is connectionless and faster but does not guarantee delivery. Use UDP for:</p>
+    <ul>
+        <li>High-speed polling and monitoring</li>
+        <li>Applications where occasional data loss is acceptable</li>
+        <li>Low-latency requirements</li>
+    </ul>
     
     <h3>Configuration</h3>
     <p><b>Input Mode:</b> Controls whether the node uses its configured settings or reads parameters from the input message.</p>
@@ -257,10 +244,10 @@
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt class="optional">operation <span class="property-type">string</span></dt>
-        <dd>The operation to perform: "read", "write", or "mode". <b>Required when Input Mode is "Use Input Message".</b></dd>
+        <dd>The operation to perform: "read" or "write". <b>Required when Input Mode is "Use Input Message".</b></dd>
         
         <dt class="optional">address <span class="property-type">string | array</span></dt>
-        <dd>Memory address to read/write. Not required for mode operation.<br>
+        <dd>Memory address to read/write.<br>
         <b>Single Address:</b> Word address (e.g., "100") or bit address (e.g., "100.05" for bit 5 of word 100).<br>
         <b>Bit Addressing:</b> Use format "word.bit" where bit is 0-15 (bit 0 is LSB, bit 15 is MSB).<br>
         <b>Multi-Address Read:</b> Provide an array with:<br>
@@ -271,9 +258,6 @@
         
         <dt class="optional">dataType <span class="property-type">string</span></dt>
         <dd>Memory area type (CIO, WR, HR, AR, DM, EM). <b>Required when Input Mode is "Use Input Message" for single address or as default for multi-address.</b></dd>
-        
-        <dt class="optional">mode <span class="property-type">string</span></dt>
-        <dd>PLC operating mode: "RUN", "MONITOR", or "STOP". Required for mode operation.</dd>
         
         <dt class="optional">count <span class="property-type">number</span></dt>
         <dd>Number of items to read (for read operations only). Default: 1<br>
@@ -308,20 +292,12 @@
     </dl>
 
     <h3>Details</h3>
-    <p>This node communicates with Omron PLCs using the FINS (Factory Interface Network Service) protocol over TCP/IP.</p>
+    <p>This node communicates with Omron PLCs using the FINS (Factory Interface Network Service) protocol over UDP/IP.</p>
     
     <h4>Operations</h4>
     <ul>
         <li><b>Read</b>: Read data from PLC memory</li>
         <li><b>Write</b>: Write data to PLC memory</li>
-        <li><b>Change Mode</b>: Change PLC operating mode (RUN/MONITOR/STOP)</li>
-    </ul>
-    
-    <h4>PLC Modes</h4>
-    <ul>
-        <li><b>RUN</b>: Normal operating mode - program executes and I/O is active</li>
-        <li><b>MONITOR</b>: Program executes but outputs are disabled</li>
-        <li><b>STOP</b>: Program does not execute</li>
     </ul>
     
     <h4>Memory Areas</h4>
@@ -373,23 +349,6 @@ return msg;  // Returns array of 8 booleans</pre>
 
     <p><b>Multi-Address Read Example:</b></p>
     <pre>msg.operation = "read";
-msg.address = [
-    "100",                           // Read 1 word from DM100
-    {address: "200", count: 5},      // Read 5 words from DM200
-    {address: "300", dataType: "CIO", count: 2}  // Read 2 words from CIO300
-];
-return msg;
-// Output: [{address: "100", dataType: "DM", value: ...}, ...]</pre>
-
-    <p><b>Write Example:</b></p>
-    <pre>msg.operation = "write";
-msg.dataType = "DM";
-msg.address = "100";
-msg.payload = [100, 200, 300];  // Write 3 values
-return msg;</pre>
-
-    <p><b>Multi-address Read Example:</b></p>
-    <pre>msg.operation = "read";
 msg.dataType = "DM";  // Default for strings/objects without dataType
 msg.address = [
     "1000",                                    // Read 1 word from DM1000
@@ -398,6 +357,13 @@ msg.address = [
 ];
 return msg;
 // Output: [{address: "1000", dataType: "DM", value: [...]}, ...]</pre>
+
+    <p><b>Write Example:</b></p>
+    <pre>msg.operation = "write";
+msg.dataType = "DM";
+msg.address = "100";
+msg.payload = [100, 200, 300];  // Write 3 values
+return msg;</pre>
 
     <p><b>Bit Write Example:</b></p>
     <pre>msg.operation = "write";
@@ -409,9 +375,4 @@ return msg;
 msg.address = "100.05";
 msg.payload = [true, false, true, false];  // Set 4 bits
 return msg;  // Writes to bits 5, 6, 7, 8 of DM100</pre>
-
-    <p><b>Change Mode Example:</b></p>
-    <pre>msg.operation = "mode";
-msg.mode = "RUN";  // or "MONITOR" or "STOP"
-return msg;</pre>
 </script>
