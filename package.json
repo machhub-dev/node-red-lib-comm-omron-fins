@@ -1,7 +1,7 @@
 {
-    "name": "node-red-lib-comm-omron-fins",
+    "name": "@machhub-dev/node-red-lib-comm-omron-fins",
     "version": "1.0.0",
-    "description": "Node-RED nodes for Omron FINS protocol communication",
+    "description": "Node-RED nodes for Omron FINS protocol communication (TCP and UDP)",
     "main": "omron-fins.js",
     "keywords": [
         "node-red",
@@ -9,10 +9,18 @@
         "fins",
         "plc",
         "automation",
-        "industrial"
+        "industrial",
+        "tcp",
+        "udp",
+        "iot",
+        "machhub"
     ],
     "author": "Intellogic Technology Sdn Bhd",
     "license": "Apache-2.0",
+    "homepage": "https://github.com/machhub-dev/node-red-lib-comm-omron-fins#readme",
+    "bugs": {
+        "url": "https://github.com/machhub-dev/node-red-lib-comm-omron-fins/issues"
+    },
     "node-red": {
         "nodes": {
             "omron-fins-tcp": "omron-fins.js",

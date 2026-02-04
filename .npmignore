@@ -1,0 +1,7 @@
+# Exclude documentation files from npm package
+W227E12_FINS_Commands_Reference_Manual.pdf
+.git
+.gitignore
+.vscode
+*.log
+node_modules
